@@ -1,0 +1,39 @@
+
+        body {
+            font-family: 'Courier New', Courier, monospace, sans-serif; color: white;
+            margin: 20px; background-color: black;font-size:x-large
+        }
+        
+a{
+    color: white; font-weight: bold; text-decoration: none; font-size: large;
+}
+        h1 {
+            color: #2e86de;
+        }
+        h2{
+            color: red;
+        }
+        caption {
+            caption-side: top;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        img{
+            border: 5px solid #097ed2;
+    border-radius: 8px;
+        }
+        .bronbron:hover {
+          border:10px, yellow;
+        }
+        footer{
+            text-align: center;
+        }
+        h3{
+            color: red;
+            text-align: center;
+      
+        }
+        .anchor{
+            color: #2e86de;
+        }

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA All-Time Records Trivia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Use Inter font */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+        }
+        /* Custom styles for button hover/active states */
+        .action-button { /* Renamed for clarity */
+            transition: all 0.2s ease-in-out;
+        }
+        .action-button:hover:not(:disabled) { /* Apply hover only if not disabled */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+         .action-button:active:not(:disabled) { /* Apply active only if not disabled */
+            transform: translateY(0px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .action-button:disabled { /* Style for disabled buttons */
+             opacity: 0.6;
+             cursor: not-allowed;
+        }
+        /* Style for the list items */
+        #answer-list li {
+            transition: background-color 0.3s ease, color 0.3s ease;
+            padding: 8px 12px;
+            margin-bottom: 4px;
+            border-radius: 6px;
+            background-color: #e5e7eb; /* Default gray background */
+            color: #6b7280; /* Default gray text */
+        }
+        #answer-list li.correct {
+            background-color: #d1fae5; /* Light green background */
+            color: #065f46; /* Dark green text */
+            font-weight: 500;
+        }
+        #answer-list li.incorrect {
+            background-color: #fee2e2; /* Light red background */
+            color: #991b1b; /* Dark red text */
+            font-weight: 500;
+        }
+        /* Ensure list numbers are styled */
+        #answer-list {
+            list-style: none; /* Remove default */
+            counter-reset: list-counter;
+            padding-left: 0;
+        }
+        #answer-list li::before {
+            counter-increment: list-counter;
+            content: counter(list-counter) ". ";
+            font-weight: bold;
+            margin-right: 8px;
+            color: #4b5563; /* Medium gray for numbers */
+        }
+         #answer-list li.correct::before,
+         #answer-list li.incorrect::before {
+             color: inherit; /* Inherit color from parent li */
+         }
+    </style>
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+
+    <div class="bg-white p-6 sm:p-8 rounded-lg shadow-xl w-full max-w-2xl">
+
+        <div id="menu-screen">
+            <h1 class="text-2xl sm:text-3xl font-bold text-center mb-6 text-gray-800">NBA All-Time Records Trivia</h1>
+            <p class="text-center text-gray-600 mb-8">Select a category to start:</p>
+            <div class="grid grid-cols-1 gap-4">
+                <button data-category="scorers" class="action-button w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md">All-Time Scorers</button>
+                <button data-category="assists" class="action-button w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md">All-Time Assists</button>
+                <button data-category="steals" class="action-button w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md">All-Time Steals</button>
+                <button data-category="rebounds" class="action-button w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md">All-Time Rebounds</button>
+                <button data-category="blocks" class="action-button w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md">All-Time Blocks</button>
+            </div>
+        </div>
+
+        <div id="trivia-screen" class="hidden">
+            <h2 id="category-title" class="text-xl sm:text-2xl font-bold text-center mb-4 text-gray-800">Category Title</h2>
+            <div class="flex justify-between items-center mb-4">
+                <p class="text-gray-600">Guess the Top 10! (Full or Last Name)</p> <div id="timer" class="text-lg font-semibold text-red-600 bg-red-100 px-3 py-1 rounded-full">02:30</div>
+            </div>
+
+            <div class="mb-4">
+                <input type="text" id="answer-input" placeholder="Type player name and press Enter" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <p id="message-area" class="text-center font-bold text-xl mb-4 h-6"></p> <ol id="answer-list" class="space-y-1 mb-6">
+                </ol>
+
+            <div class="flex flex-col sm:flex-row gap-3">
+                 <button id="give-up-button" class="action-button w-full sm:w-1/2 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md">Give Up</button>
+                 <button id="try-again-button" class="action-button w-full sm:w-1/2 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md">Try Again / Main Menu</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Game Data ---
+        const topPlayersData = {
+            scorers: {
+                title: "NBA All-Time Scorers",
+                players: ["LeBron James", "Kareem Abdul-Jabbar", "Karl Malone", "Kobe Bryant", "Michael Jordan", "Dirk Nowitzki", "Wilt Chamberlain", "Kevin Durant", "Shaquille O'Neal", "Carmelo Anthony"]
+            },
+            assists: {
+                title: "NBA All-Time Assists",
+                players: ["John Stockton", "Chris Paul", "Jason Kidd", "LeBron James", "Steve Nash", "Mark Jackson", "Magic Johnson", "Russell Westbrook", "Oscar Robertson", "Isiah Thomas"]
+            },
+            steals: {
+                title: "NBA All-Time Steals",
+                players: ["John Stockton", "Chris Paul", "Jason Kidd", "Michael Jordan", "Gary Payton", "LeBron James", "Maurice Cheeks", "Scottie Pippen", "Clyde Drexler", "Hakeem Olajuwon"]
+            },
+            rebounds: {
+                title: "NBA All-Time Rebounds",
+                players: ["Wilt Chamberlain", "Bill Russell", "Kareem Abdul-Jabbar", "Elvin Hayes", "Moses Malone", "Tim Duncan", "Karl Malone", "Robert Parish", "Kevin Garnett", "Dwight Howard"]
+            },
+            blocks: {
+                title: "NBA All-Time Blocks",
+                players: ["Hakeem Olajuwon", "Dikembe Mutombo", "Kareem Abdul-Jabbar", "Mark Eaton", "Tim Duncan", "David Robinson", "Patrick Ewing", "Shaquille O'Neal", "Tree Rollins", "Robert Parish"]
+            }
+        };
+
+        // --- DOM Elements ---
+        const menuScreen = document.getElementById('menu-screen');
+        const triviaScreen = document.getElementById('trivia-screen');
+        const categoryButtons = document.querySelectorAll('[data-category]'); // Select all category buttons
+        const categoryTitle = document.getElementById('category-title');
+        const timerDisplay = document.getElementById('timer');
+        const answerInput = document.getElementById('answer-input');
+        const answerList = document.getElementById('answer-list');
+        const messageArea = document.getElementById('message-area');
+        const tryAgainButton = document.getElementById('try-again-button');
+        const giveUpButton = document.getElementById('give-up-button'); // Get the new button
+
+        // --- Game State Variables ---
+        let currentCategory = null;
+        let currentPlayers = [];
+        let correctGuesses = new Set(); // Stores LOWERCASE FULL names of correctly guessed players
+        let score = 0;
+        let timerInterval = null;
+        let timeLeft = 150; // 2.5 minutes in seconds
+        let gameActive = false;
+
+        // --- Functions ---
+
+        /**
+         * Shows the main menu screen and hides the trivia screen.
+         * Resets game state.
+         */
+        function showMenu() {
+            menuScreen.classList.remove('hidden');
+            triviaScreen.classList.add('hidden');
+            resetGame();
+        }
+
+        /**
+         * Resets all game variables to their initial state.
+         */
+        function resetGame() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            currentCategory = null;
+            currentPlayers = [];
+            correctGuesses.clear();
+            score = 0;
+            timeLeft = 150;
+            gameActive = false;
+            answerInput.value = '';
+            answerInput.disabled = false;
+            giveUpButton.disabled = false; // Re-enable give up button
+            messageArea.textContent = '';
+            messageArea.className = 'text-center font-bold text-xl mb-4 h-6';
+            timerDisplay.textContent = formatTime(timeLeft);
+            timerDisplay.classList.remove('text-green-600', 'bg-green-100');
+            timerDisplay.classList.add('text-red-600', 'bg-red-100');
+            answerList.innerHTML = '';
+        }
+
+        /**
+         * Starts the trivia game for the selected category.
+         * @param {string} categoryKey - The key for the category (e.g., 'scorers').
+         */
+        function startTrivia(categoryKey) {
+            resetGame();
+            currentCategory = categoryKey;
+            const categoryData = topPlayersData[currentCategory];
+            currentPlayers = categoryData.players;
+            gameActive = true;
+
+            categoryTitle.textContent = categoryData.title;
+            menuScreen.classList.add('hidden');
+            triviaScreen.classList.remove('hidden');
+
+            // Create list items
+            answerList.innerHTML = '';
+            for (let i = 0; i < 10; i++) {
+                const li = document.createElement('li');
+                li.id = `player-${i}`;
+                li.textContent = `?`;
+                answerList.appendChild(li);
+            }
+
+            startTimer();
+            answerInput.focus();
+        }
+
+        /**
+         * Starts the countdown timer.
+         */
+        function startTimer() {
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        /**
+         * Updates the timer display and ends the game if time runs out.
+         */
+        function updateTimer() {
+            if (!gameActive) return;
+
+            timeLeft--;
+            timerDisplay.textContent = formatTime(timeLeft);
+
+            if (timeLeft <= 0) {
+                endGame(false); // Time's up!
+            }
+        }
+
+        /**
+         * Formats seconds into MM:SS format.
+         * @param {number} seconds - The total seconds.
+         * @returns {string} - The formatted time string.
+         */
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+        }
+
+        /**
+         * Extracts the last name from a full name string.
+         * Handles simple cases and hyphenated names like Abdul-Jabbar.
+         * @param {string} fullName - The player's full name.
+         * @returns {string} - The extracted last name (lowercase).
+         */
+        function getLastNameLower(fullName) {
+             if (!fullName) return '';
+             const parts = fullName.trim().split(' ');
+             return parts[parts.length - 1].toLowerCase();
+        }
+
+
+        /**
+         * Checks the user's answer against the current player list (full name or last name).
+         */
+        function checkAnswer() {
+            if (!gameActive) return;
+
+            const userAnswerLower = answerInput.value.trim().toLowerCase();
+            answerInput.value = ''; // Clear input immediately
+
+            if (userAnswerLower === '') return;
+
+            let foundMatch = false;
+            // Iterate through players to check for full or last name match
+            for (let i = 0; i < currentPlayers.length; i++) {
+                const playerFullName = currentPlayers[i];
+                const playerFullNameLower = playerFullName.toLowerCase();
+                const playerLastNameLower = getLastNameLower(playerFullName);
+
+                // Check if this player hasn't been guessed yet
+                if (!correctGuesses.has(playerFullNameLower)) {
+                    // Check if the user input matches either full name or last name
+                    if (userAnswerLower === playerFullNameLower || userAnswerLower === playerLastNameLower) {
+                        // Correct guess!
+                        score++;
+                        correctGuesses.add(playerFullNameLower); // Add the full name to the guessed set
+                        foundMatch = true;
+
+                        // Update the list item
+                        const listItem = document.getElementById(`player-${i}`);
+                        if (listItem) {
+                            listItem.textContent = playerFullName; // Display original full name
+                            listItem.classList.remove('incorrect'); // Remove incorrect if previously marked (unlikely here)
+                            listItem.classList.add('correct');
+                        }
+
+                        // Check for victory
+                        if (score === 10) {
+                            endGame(true); // Victory!
+                        }
+                        break; // Exit loop once a match is found and processed
+                    }
+                }
+            }
+
+            // Optional: Add feedback if the input was not empty but didn't match any available player
+            // if (!foundMatch && userAnswerLower !== '') {
+            //     console.log("Incorrect or already guessed.");
+            // }
+        }
+
+
+        /**
+         * Ends the current game session.
+         * @param {boolean} isVictory - Whether the player won or ran out of time/gave up.
+         */
+        function endGame(isVictory) {
+            if (!gameActive) return;
+
+            gameActive = false;
+            clearInterval(timerInterval);
+            answerInput.disabled = true;
+            giveUpButton.disabled = true; // Disable give up button
+
+            if (isVictory) {
+                messageArea.textContent = "VICTORY!";
+                messageArea.className = 'text-center font-bold text-xl mb-4 h-6 text-green-600';
+                // Ensure all list items are marked correct
+                currentPlayers.forEach((player, index) => {
+                    const li = document.getElementById(`player-${index}`);
+                     if (li && !li.classList.contains('correct')) {
+                         li.textContent = player;
+                         li.classList.add('correct');
+                    }
+                });
+                 timerDisplay.classList.remove('text-red-600', 'bg-red-100');
+                 timerDisplay.classList.add('text-green-600', 'bg-green-100');
+            } else {
+                // Time ran out or gave up
+                messageArea.textContent = timeLeft <= 0 ? "Time's Up!" : "Game Over"; // Different message if gave up early
+                 messageArea.className = 'text-center font-bold text-xl mb-4 h-6 text-red-600';
+
+                // Reveal unguessed answers in red
+                currentPlayers.forEach((player, index) => {
+                    const li = document.getElementById(`player-${index}`);
+                    // Only reveal if it wasn't already marked correct
+                    if (li && !li.classList.contains('correct')) {
+                        li.textContent = player; // Reveal the name
+                        li.classList.add('incorrect');
+                    }
+                });
+            }
+        }
+
+        // --- Event Listeners ---
+
+        // Category button clicks
+        categoryButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const category = button.getAttribute('data-category');
+                if (category) {
+                    startTrivia(category);
+                }
+            });
+        });
+
+        // Answer input submission (Enter key)
+        answerInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        // Try Again button click
+        tryAgainButton.addEventListener('click', showMenu);
+
+        // Give Up button click
+        giveUpButton.addEventListener('click', () => {
+             if (gameActive) { // Only works if game is active
+                 endGame(false); // End the game as if time ran out
+             }
+        });
+
+
+        // --- Initial Setup ---
+        showMenu(); // Show the menu when the page loads
+
+    </script>
+</body>
+</html>
